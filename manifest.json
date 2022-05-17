@@ -1,0 +1,15 @@
+{
+  "name": "Pendlaren",
+  "background_color": "#fff",
+  "description": "App för att hålla koll på lokaltrafiken",
+  "display": "standalone",
+  "start_url": "/",
+  "theme_color": "#fff",
+  "icons": [
+    {
+      "src": "/14925059.png",
+      "sizes": "280x280",
+      "type": "image/png"
+    }
+  ]
+}

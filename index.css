@@ -1,0 +1,170 @@
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+body  > div {
+  flex-shrink: 0;
+  max-width: 600px;
+  margin: 6px;
+  padding: 10px;
+  background-color: rgb(236, 236, 236);
+  border-radius: 5px;
+  width: 100%;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.collapsed .content {
+  display: none;
+}
+
+.stopTimeTable {
+  cursor: pointer;
+}
+
+.stop {
+  position: relative;
+}
+
+.stopsList:not(:last-child) .stop:before {
+  content: '';
+  position: absolute;
+  top: 0;
+  height: 100%;
+  left: -20px;
+  border: 1px dashed darkgrey;
+}
+
+#routeList {
+  padding: 0;
+}
+
+.trip {
+  border: 1px solid #ccc;
+  background-color: rgb(249, 249, 249);
+  padding: 10px;
+  margin: 10px 5px;
+  padding-top: 0;
+  cursor: pointer;
+  position: relative;
+
+  transition: background-color 0.2s ease-in-out;
+}
+
+.trip h4:not(:last-child, :only-of-type) {
+  padding-bottom: 5px;
+  border-bottom: 4px dotted rgb(170, 170, 170);
+}
+
+.opened {
+  background-color: white;
+  border-radius: 4px;
+}
+
+.trip h4 {
+  padding-right: 130px;
+}
+
+.pointyFinger {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  transform: rotate3d(0,1,0, 180deg);
+
+  transition: transform 0.5s ease;
+}
+
+.tripTime {
+  position: absolute;
+  top: 12px;
+  right: 30px;
+}
+
+#nearbyDiv, #timeTableDiv, #routeDiv {
+  position: relative;
+}
+
+#nearbyDiv .pointyFinger, #timeTableDiv .pointyFinger, #routeDiv > .pointyFinger {
+  transform: rotate3d(1,1,0, 180deg);
+}
+
+.collapsed .pointyFinger {
+  transform: rotate3d(0,1,0, 180deg) !important;
+}
+
+.opened .pointyFinger {
+  transform: rotate3d(1,1,0, 180deg);
+}
+
+.hidden {
+  display: none;
+}
+
+ul {
+  padding: 0;
+  margin: 0;
+  margin-top: 5px;
+  padding-left: 10px;
+  list-style: none;
+}
+
+li {
+  padding: 10px 0;
+  margin: 0 20px 0 10px;
+  font-size: 1.2em;  
+}
+
+.savedStop {
+  margin: 0 10px 0 0;
+}
+
+li:not(:last-child) {
+  border-bottom: 1px solid grey;
+}
+
+li.trip {
+  border-bottom: 1px solid #ccc;
+}
+
+h4, h3 {
+  margin: 0;
+  padding: 0;
+  margin-bottom: 5px;
+  margin-top: 10px;
+}
+
+.stopsList {
+  display: none;
+}
+
+.opened .stopsList {
+  display: block;
+}
+
+.mapboxgl-map {
+  height: 250px;
+  width: 400px;
+  border-radius: 5px;
+  box-shadow: 2px 2px 4px #ccc;
+  margin: 5px auto;
+}
+
+#map button {
+  border: 0;
+  background: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.stopsListAndMap {
+  display: flex;
+  flex-direction: row;
+}
+
+#recentStops {
+  background-color: rgb(251, 251, 251);
+  border-radius: 4px;
+  margin-bottom: 10px;
+}
