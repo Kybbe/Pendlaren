@@ -11,7 +11,7 @@ body  > div {
   padding: 10px;
   background-color: rgb(236, 236, 236);
   border-radius: 5px;
-  width: 100%;
+  width: calc(100% - 12px);
   box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -21,10 +21,16 @@ body  > div {
 
 .stopTimeTable {
   cursor: pointer;
+  display: flex;
+  justify-content: space-between;
 }
 
 .stop {
   position: relative;
+}
+
+.activeStop {
+  background-color: rgb(251, 251, 251);
 }
 
 .stopsList:not(:last-child) .stop:before {
@@ -52,7 +58,7 @@ body  > div {
   transition: background-color 0.2s ease-in-out;
 }
 
-.trip h4:not(:last-child, :only-of-type) {
+.trip h4:not(:last-of-type, :only-of-type) {
   padding-bottom: 5px;
   border-bottom: 4px dotted rgb(170, 170, 170);
 }
@@ -60,6 +66,7 @@ body  > div {
 .opened {
   background-color: white;
   border-radius: 4px;
+  box-shadow: 3px 3px 8px rgba(0, 0, 0, 0.3);
 }
 
 .trip h4 {
@@ -116,6 +123,7 @@ li {
 }
 
 .savedStop {
+  cursor: pointer;
   margin: 0 10px 0 0;
 }
 
@@ -127,11 +135,39 @@ li.trip {
   border-bottom: 1px solid #ccc;
 }
 
+.departure {
+  display: flex;
+  justify-content: space-between;
+}
+
 h4, h3 {
   margin: 0;
   padding: 0;
   margin-bottom: 5px;
   margin-top: 10px;
+}
+
+button {
+  background-color: white;
+  margin: 5px;
+  border: 1px solid grey; 
+  cursor: pointer; 
+  border-radius: 5px; 
+  text-align: center; 
+  padding: 4px 6px;
+  
+  transition: background-color 0.2s ease-in-out;
+}
+
+button:hover {
+  background-color: rgb(236, 236, 236);
+}
+
+#getNearby {
+  margin: 5px auto !important;
+  padding: 5px 10px !important;
+  font-size: 1.3em;
+  display: block; 
 }
 
 .stopsList {

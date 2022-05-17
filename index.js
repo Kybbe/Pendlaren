@@ -13,6 +13,8 @@ let sortBtn = document.getElementById("sort");
 
 let routeBtnElem = document.getElementById("createRoute");
 
+let removeSavedStops = document.getElementById("removeSaved");
+
 let nearbyDiv = document.getElementById("nearbyDiv");
 let timeTableDiv = document.getElementById("timeTableDiv");
 let routeDiv = document.getElementById("routeDiv");
@@ -44,6 +46,12 @@ filterBtn.addEventListener("click", function() {
 
 sortBtn.addEventListener("click", function() {
   sortByTrack();
+});
+
+removeSavedStops.addEventListener("click", function() {
+  localStorage.removeItem("savedStops");
+  savedStopsFromStorage = [];
+  showSavedStops();
 });
 
 nearbyDiv.addEventListener("click", collapse);
@@ -92,6 +100,15 @@ function getNearby() {
         buttonElem.addEventListener("click", function() {
           clickedStop = stop.StopLocation;
           getTimeTable(stop.StopLocation);
+          if(document.getElementsByClassName("activeStop").length > 0) {
+            document.getElementsByClassName("activeStop")[0].classList.remove("activeStop");
+          }
+          let timetableElems = document.getElementsByClassName("stopTimeTable");
+          for (let stopHTML of timetableElems) {
+            if(stopHTML.innerHTML.includes(stop.StopLocation.name)) {
+              stopHTML.classList.add("activeStop");
+            }
+          };
         });
         divElement.appendChild(buttonElem);
 
@@ -117,10 +134,14 @@ function showStop(stop) {
   if(stop.name.includes("(Göteborg kn)")) {
     stop.name = stop.name.replace("(Göteborg kn)", "");
   }
-  li.innerHTML = `${stop.name} (${stop.dist} meter bort)`;
+  li.innerHTML = `<div>${stop.name}</div <div>(${stop.dist} meter bort)</div>`;
   li.addEventListener("click", function() {
     clickedStop = stop;
     getTimeTable(stop)
+    if(document.getElementsByClassName("activeStop").length > 0) {
+      document.getElementsByClassName("activeStop")[0].classList.remove("activeStop");
+    }
+    li.classList.add("activeStop");
   });
   stopsList.appendChild(li);
 }
@@ -208,7 +229,9 @@ function showDeparture(departure) {
   if(departure.direction.includes("(Göteborg kn)")) {
     departure.direction = departure.direction.replace("(Göteborg kn)", "");
   }
-  li.innerHTML = `${departure.Product[0].operator === "Västtrafik" ? "" : departure.Product[0].operator + ": "} ${departure.Product[0].displayNumber} mot ${departure.direction} ⏰${departure.time} ${departure.rtTrack ? "(Läge " + departure.rtTrack + ")" : ""}`;
+  let time = departure.time;
+  time = time.substring(0, time.length - 3);
+  li.innerHTML = `<div>${departure.Product[0].operator === "Västtrafik" ? "" : departure.Product[0].operator + ": "} ${departure.Product[0].displayNumber} mot ${departure.direction}</div <div>⏰${time} ${departure.rtTrack ? "(Läge " + departure.rtTrack + ")" : ""}</div>`;
   departuresList.appendChild(li);
   departuresList.scrollIntoView({behavior: "smooth"});
 }
@@ -274,7 +297,7 @@ function saveRouteStops(stop1, stop2) {
     }
     savedStopsFromStorage.unshift(stopsObj);
     localStorage.setItem("savedStops", JSON.stringify(savedStopsFromStorage));
-    console.log("saved stops to local storage", savedStopsFromStorage);
+    showSavedStops();
   } else {
     savedStopsFromStorage.forEach(stop => {
       if(stop.stop1.extId === stop1.extId && stop.stop2.extId === stop2.extId) {
@@ -286,6 +309,7 @@ function saveRouteStops(stop1, stop2) {
 }
 
 function showSavedStops() {
+  recentStopsList.innerHTML = "";
   let sorted = savedStopsFromStorage.sort(function(a, b) {
     return b.quantity - a.quantity;
   });
@@ -326,19 +350,27 @@ function showTrip(trip) {
     let duration = leg.duration;
     //remove "PT" from duration
     duration = duration.replace("PT", "");
+    let originTime = leg.Origin.time;
+    originTime = originTime.substring(0, originTime.length - 3);
+    let destinationTime = leg.Destination.time;
+    destinationTime = destinationTime.substring(0, destinationTime.length - 3);
     if(leg.name === "Promenad") {
       li.innerHTML += `<h4>Promenad to ${leg.Destination.name} (${duration})</h4>`;
     } else {
-      li.innerHTML += `<h4>${leg.name} ${leg.direction}, ${leg.Origin.time} - ${leg.Destination.time} (${duration})</h4>`;
+      li.innerHTML += `<h4>${leg.Product[0].displayNumber} mot ${leg.direction}, ${originTime} - ${destinationTime} (${duration})</h4>`;
     }
     if(leg.Stops === undefined) { return; }
     leg.Stops.Stop.forEach((stop, index) => {
       let stopLi = document.createElement("li");
       stopLi.classList.add("stop");
       if(index === 0) {
-        stopLi.innerHTML = `${stop.name}, ${stop.depTime}`;
+        let depTime = stop.depTime;
+        depTime = depTime.substring(0, depTime.length - 3);
+        stopLi.innerHTML = `${stop.name}, ${depTime}`;
       } else {
-        stopLi.innerHTML = `${stop.name}, (${stop.arrTime})`;
+        let arrTime = stop.arrTime;
+        arrTime = arrTime.substring(0, arrTime.length - 3);
+        stopLi.innerHTML = `${stop.name}, (${arrTime})`;
       }
       stops.appendChild(stopLi);
     });
