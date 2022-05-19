@@ -1,6 +1,11 @@
-self.addEventListener('fetch', (event) => {
+self.addEventListener('fetch', async (event) => {
+  console.log("fetch event", event.request);
   if(navigator.onLine) {
     console.log("Du är online!");
+
+    const response = await updateCache(event.request);
+    return response;
+
   } else {
     console.log("Du är offline!");
     event.respondWith(
@@ -21,7 +26,8 @@ self.addEventListener('install', (event) => {
         './index.js',
         './service-worker.js',
         './offline.html',
-        './favicon.ico'
+        './favicon.ico',
+        './trainTrack.jpeg'
       ]);
     })
   )
@@ -33,3 +39,14 @@ self.addEventListener('activate', () => {
   self.skipWaiting();
   console.log('Activated');
 });
+
+async function updateCache(request) {
+  const response = await fetch(request);
+
+  if(request.method == "GET") {
+    const cache = await caches.open('v1');
+    cache.put(request, response.clone());
+  }
+  
+  return response;
+}

@@ -7,6 +7,26 @@ let departuresList = document.getElementById("departuresList");
 let routeList = document.getElementById("routeList");
 let recentStopsList = document.getElementById("recentStops");
 
+let dateInput = document.getElementById("date");
+let timeInput = document.getElementById("time");
+let timeSelect = document.getElementById("timeType");
+
+let cameraBtn = document.getElementById("cameraBtn");
+let picBtn = document.getElementById("picBtn");
+let camera = document.getElementById("camera");
+let canvas = document.getElementById("canvas");
+let gallery = document.getElementById("gallery");
+let cancelBtn = document.getElementById("cancelBtn");
+let ctx = canvas.getContext("2d");
+
+let images = JSON.parse(localStorage.getItem("images")) || [];
+populateGallery();
+
+let clearGallery = document.getElementById("clearGallery")
+let clearProfile = document.getElementById("clearProfile");
+
+let menu = document.getElementById("menu");
+
 let directionInput = document.getElementById("direction");
 let filterBtn = document.getElementById("filterTimeTable");
 let sortBtn = document.getElementById("sort");
@@ -30,7 +50,7 @@ if(savedStopsFromStorage !== null) {
 
 var departuresArray = [];
 
-let loader = `<div class="boxLoading">Laddar...</div>`;
+let loader = `<div class="boxLoading"></div>`;
 
 nearbyBtnElem.addEventListener("click", function() {
   getNearby();
@@ -54,9 +74,82 @@ removeSavedStops.addEventListener("click", function() {
   showSavedStops();
 });
 
+let stream;
+cameraBtn.addEventListener("click", async function() {
+  if('mediaDevices' in navigator) {
+    stream = await navigator.mediaDevices.getUserMedia({video: true, audio: false});
+    camera.srcObject = stream;
+    camera.style.display = "block";
+    camera.play();
+  }
+});
+
+cancelBtn.addEventListener("click", function() {
+  stream.getTracks().forEach(function(track) {
+    track.stop();
+  });
+  camera.style.display = "none";
+});
+
+picBtn.addEventListener("click", function() {
+  if(stream) {
+    ctx.drawImage(camera, 0, 0, canvas.width, canvas.height);
+    //canvas.style.display = "block";
+    const imageData = canvas.toDataURL("image/png");
+    images.push({
+      id: Date.now(),
+      imageData: imageData
+    });
+    localStorage.setItem("images", JSON.stringify(images));
+    populateGallery();
+  } else {
+    alert("Starta kameran först!")
+  }
+});
+
+menu.addEventListener("click", function() {
+  document.getElementById("menuContent").classList.toggle("hidden");
+});
+
+clearGallery.addEventListener("click", () => {
+  localStorage.removeItem("images");
+  images = [];
+  populateGallery();
+})
+
+clearProfile.addEventListener("click", function() {
+  menu.style.backgroundImage = "";
+  document.getElementById("menu").innerHTML = "🐶";
+  localStorage.removeItem("profile");
+});
+
 nearbyDiv.addEventListener("click", collapse);
 timeTableDiv.addEventListener("click", collapse);
 routeDiv.addEventListener("click", collapse);
+
+if(!navigator.onLine) {
+  alert("Du är inte online, avgångar och resor är därför inte längre aktiva!")
+}
+
+function populateGallery() {
+  gallery.innerHTML = "";
+  gallery.innerHTML += "<h2>Galleri</h2> <h4>Klicka på en bild för att välja den som profilbild :)</h4>";
+  images.forEach(image => {
+    let img = document.createElement("img")
+    img.classList.add("galleryImg")
+    img.setAttribute("src", image.imageData);
+    gallery.appendChild(img)
+    img.addEventListener("click", function() {
+      setProfilePicture(image);
+    });
+  })
+}
+
+function setProfilePicture(img) {
+  menu.style.backgroundImage = `url(${img.imageData})`;
+  menu.innerHTML = "";
+  localStorage.setItem("profilePicture", JSON.stringify(img));
+}
 
 function collapse(e) {
   if(e.target.id === "nearbyDiv" || e.target.id === "timeTableDiv" || e.target.id === "routeDiv") {
@@ -68,63 +161,76 @@ function collapse(e) {
 function getNearby() {
   if(navigator.geolocation) {
     stopsList.innerHTML = loader;
-    navigator.geolocation.getCurrentPosition(async (position) => {
-      let lat = position.coords.latitude;
-      let lng = position.coords.longitude;
-      let link = `https://api.resrobot.se/v2.1/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&format=json&accessId=${trafiklabAPI}`;
-
-      mapboxgl.accessToken = mapAPIToken;
-
-      const map = new mapboxgl.Map({
-        container: 'map',
-        style: 'mapbox://styles/mapbox/streets-v11',
-        center: [lng, lat],
-        zoom: 13
-      });
-
-      new mapboxgl
-        .Marker({color: "red", scale: 0.7})
-        .setLngLat([lng, lat])
-        .addTo(map)
-
-      let data = await fetch(link);
-      let json = await data.json();
-      let stops = json.stopLocationOrCoordLocation;
-      stopsList.innerHTML = "";
-      stops.forEach(stop => {
-        showStop(stop.StopLocation);
-
-        let divElement = document.createElement("div");
-        let buttonElem = document.createElement("button");
-        buttonElem.innerHTML = `${stop.StopLocation.name}`;
-        buttonElem.addEventListener("click", function() {
-          clickedStop = stop.StopLocation;
-          getTimeTable(stop.StopLocation);
-          if(document.getElementsByClassName("activeStop").length > 0) {
-            document.getElementsByClassName("activeStop")[0].classList.remove("activeStop");
-          }
-          let timetableElems = document.getElementsByClassName("stopTimeTable");
-          for (let stopHTML of timetableElems) {
-            if(stopHTML.innerHTML.includes(stop.StopLocation.name)) {
-              stopHTML.classList.add("activeStop");
-            }
-          };
-        });
-        divElement.appendChild(buttonElem);
-
-        var popup = new mapboxgl.Popup()
-          .addTo(map)
-          .setDOMContent(divElement);
-      
-        new mapboxgl
-          .Marker()
-          .setLngLat([stop.StopLocation.lon, stop.StopLocation.lat])
-          .addTo(map)
-          .setPopup(popup)
-          .togglePopup();
-      })
+    navigator.geolocation.getCurrentPosition((position) => {
+      let lat = position.coords.latitude.toFixed(3);
+      let lng = position.coords.longitude.toFixed(3);
+      let positionObj = {lat: lat, lng: lng}
+      localStorage.setItem("lastPosition", JSON.stringify(positionObj) )
+      getNearbyStops(lat, lng);
+    }, (err) => {
+      console.log(err)
+      let lastPosition = localStorage.getItem("lastPosition");
+      if(lastPosition !== null) {
+        lastPosition = JSON.parse(lastPosition);
+        getNearbyStops(lastPosition.lat, lastPosition.lng);
+      }
     });
   }
+}
+
+async function getNearbyStops(lat, lng) {
+  let link = `https://api.resrobot.se/v2.1/location.nearbystops?originCoordLat=${lat}&originCoordLong=${lng}&format=json&accessId=${trafiklabAPI}`;
+
+  mapboxgl.accessToken = mapAPIToken;
+
+  const map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v11',
+    center: [lng, lat],
+    zoom: 13
+  });
+
+  new mapboxgl
+    .Marker({color: "red", scale: 0.7})
+    .setLngLat([lng, lat])
+    .addTo(map)
+
+  let data = await fetch(link);
+  let json = await data.json();
+  let stops = json.stopLocationOrCoordLocation;
+  stopsList.innerHTML = "";
+  stops.forEach(stop => {
+    showStop(stop.StopLocation);
+
+    let divElement = document.createElement("div");
+    let buttonElem = document.createElement("button");
+    buttonElem.innerHTML = `${stop.StopLocation.name}`;
+    buttonElem.addEventListener("click", function() {
+      clickedStop = stop.StopLocation;
+      getTimeTable(stop.StopLocation);
+      if(document.getElementsByClassName("activeStop").length > 0) {
+        document.getElementsByClassName("activeStop")[0].classList.remove("activeStop");
+      }
+      let timetableElems = document.getElementsByClassName("stopTimeTable");
+      for (let stopHTML of timetableElems) {
+        if(stopHTML.innerHTML.includes(stop.StopLocation.name)) {
+          stopHTML.classList.add("activeStop");
+        }
+      };
+    });
+    divElement.appendChild(buttonElem);
+
+    var popup = new mapboxgl.Popup()
+      .addTo(map)
+      .setDOMContent(divElement);
+  
+    new mapboxgl
+      .Marker()
+      .setLngLat([stop.StopLocation.lon, stop.StopLocation.lat])
+      .addTo(map)
+      .setPopup(popup)
+      .togglePopup();
+  })
 }
 
 function showStop(stop) {
@@ -231,11 +337,10 @@ function showDeparture(departure) {
   }
   let time = departure.time;
   time = time.substring(0, time.length - 3);
-  li.innerHTML = `<div>${departure.Product[0].operator === "Västtrafik" ? "" : departure.Product[0].operator + ": "} ${departure.Product[0].displayNumber} mot ${departure.direction}</div <div>⏰${time} ${departure.rtTrack ? "(Läge " + departure.rtTrack + ")" : ""}</div>`;
+  li.innerHTML = `<div>${departure.Product[0].operator === "Västtrafik" ? "" : departure.Product[0].operator + ": "} ${departure.Product[0].displayNumber} mot ${departure.direction}</div> <div style="white-space: nowrap;">⏰${time} ${departure.rtTrack ? "(Läge " + departure.rtTrack + ")" : ""}</div>`;
   departuresList.appendChild(li);
   departuresList.scrollIntoView({behavior: "smooth"});
 }
-
 
 // search route, get id of both stops, then search route between them
 // lastly, display result
@@ -261,7 +366,22 @@ async function getStopInfo(stopName) {
 }
 
 async function createRoute(stop1, stop2) {
-  let link = `https://api.resrobot.se/v2.1/trip?originId=${stop1}&destId=${stop2}&passlist=true&format=json&accessId=${trafiklabAPI}`;
+  let dateText = ""; // we dont want to send a empty date= parameter, so we add nothing to the fetch
+  if(dateInput.value !== "") {
+    dateText = `&date=${dateInput.value}`; // if date is not empty, add it to the fetch with requested parameter
+  }
+
+  let timeText = ""; // same as above
+  if(timeInput.value !== "") {
+    timeText = `&time=${timeInput.value}`;
+  }
+
+  let timeTypeText = `&searchForArrival=0`; // we can add this everytime, unlike above so this is not ""
+  if(timeSelect.value == "1") {
+    timeTypeText = `&searchForArrival=1`;
+  }
+
+  let link = `https://api.resrobot.se/v2.1/trip?originId=${stop1}&destId=${stop2}&passlist=true${dateText}${timeText}${timeTypeText}&format=json&accessId=${trafiklabAPI}`;
   let data = await fetch(link);
   let json = await data.json();
   return await json;
@@ -380,11 +500,17 @@ function showTrip(trip) {
 }
 
 window.addEventListener('load', async () => {
+
+  let profileImg = await JSON.parse(localStorage.getItem("profilePicture"))
+  if(profileImg !== null) {
+    setProfilePicture(profileImg);
+  }
+
   let data = await fetch("onlyStops.json");
-  let json = await data.json();
+  let fetchJson = await data.json();
 
   //sort json so stops with "göteborg" are at the beginning
-  json.sort(function(a, b) {
+  fetchJson.sort(function(a, b) {
     if(a.includes("Göteborg") && !b.includes("Göteborg")) {
       return -1;
     }
@@ -393,7 +519,7 @@ window.addEventListener('load', async () => {
     }
     return 0;
   });
-  json.forEach(stop => {
+  fetchJson.forEach(stop => {
     let option = document.createElement("option");
     option.value = stop;
     option.innerHTML = stop;

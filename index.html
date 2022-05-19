@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="./14925059.png">
 
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.css" rel="stylesheet">
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.3.1/mapbox-gl.js"></script>
@@ -14,6 +13,28 @@
   <title>Pendlaren</title>
 </head>
 <body>
+  <div id="createProfile">
+    <div id="menu">
+      🐶
+    </div>
+    <div id="menuContent" class="hidden">
+      <h2 style="text-align: center">Ta en profilbild!</h2>
+      <div id="cameraControls">
+        <button id="cameraBtn">Starta kameran</button>
+        <button id="picBtn">Ta en bild</button>
+        <button id="cancelBtn">Avbryt</button>
+      </div>
+      <video id="camera" autoplay muted playsinline style="display: none;"></video>
+      <canvas id="canvas" style="display: none;"></canvas>
+      <button id="clearGallery">Rensa bilder i Galleri</button>
+      <button id="clearProfile">Rensa profilbild</button>
+      <section id="gallery">
+        <h2>Galleri</h2>
+        <h4>Klicka på en bild för att välja den som profilbild :)</h4>
+
+      </section>
+    </div>
+  </div>
   <div id="nearbyDiv">
     <div class="pointyFinger">☞</div>
     <h2 style="text-align: center;">Hitta närliggande hållplatser</h2>
@@ -50,14 +71,31 @@
       <ul id="recentStops">
 
       </ul>
-      <label>
-        Från:
-        <input type="text" id="stop1" list="stopsFromJSON" placeholder="Hållplats 1">
-      </label>
-      <label>
-        Till:
-        <input type="text" id="stop2" list="stopsFromJSON" placeholder="Hållplats 2">
-      </label>
+      <div>
+        <label>
+          Från:
+          <input type="text" id="stop1" list="stopsFromJSON" placeholder="Hållplats 1">
+        </label>
+        <label>
+          Till:
+          <input type="text" id="stop2" list="stopsFromJSON" placeholder="Hållplats 2">
+        </label>
+      </div>
+      <div>
+        <h4>Inte nödvändiga:</h4>
+        <label>
+          Datum: OBS: Max 3 månader frammåt.
+          <input type="date" id="date" placeholder="YYYY-MM-DD">
+        </label>
+        <label>
+          Tid:
+          <input type="time" id="time" placeholder="HH:MM">
+          <select id="timeType">
+            <option value="0">Avgång</option>
+            <option value="1">Ankomst</option>
+          </select>
+        </label>
+      </div>
 
       <datalist id="stopsFromJSON">
       </datalist>
